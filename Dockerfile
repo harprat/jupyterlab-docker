@@ -1,6 +1,38 @@
 # Choose your desired base image
 FROM jupyter/all-spark-notebook:latest
 
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y \
+	autoconf \
+	autoconf-archive \
+	automake \
+	build-essential \
+	checkinstall \
+	cmake \
+	g++ \
+	git \
+	libcairo2-dev \
+	libicu-dev \
+	libjpeg-dev \
+	libpango1.0-dev \
+	libgif-dev \
+	libwebp-dev \
+	libopenjp2-7-dev \
+	libpng-dev \
+	libtiff-dev \
+	libtool \
+	pkg-config \
+	wget \
+	xzgv \
+	zlib1g-dev \
+    software-properties-common
+
+RUN add-apt-repository ppa:alex-p/tesseract-ocr5
+
+# Install tesseract
+RUN apt install -y tesseract-ocr
+
 # name your environment and choose the python version
 ARG conda_env1=scrapper
 ARG conda_env2=ocr
@@ -11,16 +43,16 @@ RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env1}" python=${py_
     jupyter beautifulsoup4 requests selenium schedule tqdm && \
     mamba clean --all -f -y
 
-# alternatively, you can comment out the lines above and uncomment those below
-# if you'd prefer to use a YAML file present in the docker build context
-
-# COPY --chown=${NB_UID}:${NB_GID} environment.yml "/home/${NB_USER}/tmp/"
-# RUN cd "/home/${NB_USER}/tmp/" && \
-#     mamba env create -p "${CONDA_DIR}/envs/${conda_env}" -f environment.yml && \
-#     mamba clean --all -f -y
+RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env2}" python=${py_ver} ipython ipykernel && \
+    jupyter pdfminer.six pdfplumber pytesseract && \
+    mamba clean --all -f -y
 
 # create Python kernel and link it to jupyter
 RUN "${CONDA_DIR}/envs/${conda_env1}/bin/python" -m ipykernel install --user --name="${conda_env1}" && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
+RUN "${CONDA_DIR}/envs/${conda_env2}/bin/python" -m ipykernel install --user --name="${conda_env2}" && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
