@@ -53,7 +53,7 @@ RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 USER ${NB_UID}
 
 RUN mamba install --quiet --yes \
-    'xlsxwriter' \
+    'xlsxwriter' && \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
@@ -64,12 +64,12 @@ ARG conda_env2=ocr
 ARG py_ver=3.9
 
 # you can add additional libraries you want mamba to install by listing them below the first line and ending with "&& \"
-RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env1}" python=${py_ver} ipython ipykernel && \
-    jupyter beautifulsoup4 requests selenium schedule tqdm && \
+RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env1}" python=${py_ver} 'ipython' 'ipykernel' && \
+    'jupyter' 'beautifulsoup4' 'requests' 'selenium' 'schedule' 'tqdm' && \
     mamba clean --all -f -y
 
-RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env2}" python=${py_ver} ipython ipykernel && \
-    jupyter pdfminer.six pdfplumber pytesseract && \
+RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env2}" python=${py_ver} 'ipython' 'ipykernel' && \
+    'jupyter' 'pdfminer.six' 'pdfplumber' 'pytesseract' && \
     mamba clean --all -f -y
 
 # create Python kernel and link it to jupyter
