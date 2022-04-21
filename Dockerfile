@@ -12,7 +12,9 @@ RUN apt-get update --yes && \
     	automake \
 	checkinstall \
 	cmake \
+	curl \
 	g++ \
+	gnupg2 \
 	libcairo2-dev \
 	libicu-dev \
 	libjpeg-dev \
@@ -24,10 +26,10 @@ RUN apt-get update --yes && \
 	libtiff-dev \
 	libtool \
 	pkg-config \
-	wget \
 	xzgv \
 	zlib1g-dev \
-    software-properties-common
+    	software-properties-common \
+	apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository ppa:alex-p/tesseract-ocr5
 
