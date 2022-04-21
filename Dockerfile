@@ -1,17 +1,18 @@
 # Choose your desired base image
 FROM jupyter/all-spark-notebook:latest
 
-ENV DEBIAN_FRONTEND noninteractive
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-get update && apt-get install -y \
+USER root
+
+RUN apt-get update --yes && \
+	apt-get install --yes --no-install-recommends \
 	autoconf \
 	autoconf-archive \
-	automake \
-	build-essential \
+    	automake \
 	checkinstall \
 	cmake \
 	g++ \
-	git \
 	libcairo2-dev \
 	libicu-dev \
 	libjpeg-dev \
@@ -32,6 +33,25 @@ RUN add-apt-repository ppa:alex-p/tesseract-ocr5
 
 # Install tesseract
 RUN apt install -y tesseract-ocr
+
+# install google chrome
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+RUN apt-get -y update
+RUN apt-get install -y google-chrome-stable
+
+# install chromedriver
+RUN apt-get install -yqq unzip
+RUN wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE`/chromedriver_linux64.zip
+RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
+
+USER ${NB_UID}
+
+RUN mamba install --quiet --yes \
+    'xlsxwriter' \
+    mamba clean --all -f -y && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
 
 # name your environment and choose the python version
 ARG conda_env1=scrapper
@@ -56,21 +76,16 @@ RUN "${CONDA_DIR}/envs/${conda_env2}/bin/python" -m ipykernel install --user --n
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
-# any additional pip installs can be added by uncommenting the following line
-# RUN "${CONDA_DIR}/envs/${conda_env}/bin/pip" install --quiet --no-cache-dir
+# Install the Dask dashboard
+RUN "${CONDA_DIR}/envs/${conda_env}/bin/pip" install --quiet --no-cache-dir dask-labextension && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
 
-# if you want this environment to be the default one, uncomment the following line:
-# RUN echo "conda activate ${conda_env}" >> "${HOME}/.bashrc"
+# Dask Scheduler & Bokeh ports
+EXPOSE 8787
+EXPOSE 8786
 
-# install google chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-RUN apt-get -y update
-RUN apt-get install -y google-chrome-stable
-
-# install chromedriver
-RUN apt-get install -yqq unzip
-RUN wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE`/chromedriver_linux64.zip
-RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
-
+# Switch back to jovyan to avoid accidental container runs as root
 USER ${NB_UID}
+
+WORKDIR "${HOME}"
