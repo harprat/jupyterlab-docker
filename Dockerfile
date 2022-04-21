@@ -34,6 +34,9 @@ RUN add-apt-repository ppa:alex-p/tesseract-ocr5
 # Install tesseract
 RUN apt install -y tesseract-ocr
 
+# To prevent apt-key output warning 
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+
 # install google chrome
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
