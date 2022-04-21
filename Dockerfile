@@ -28,7 +28,7 @@ RUN apt-get update --yes && \
 	pkg-config \
 	xzgv \
 	zlib1g-dev \
-    	software-properties-common \
+    	software-properties-common && \
 	apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository ppa:alex-p/tesseract-ocr5
