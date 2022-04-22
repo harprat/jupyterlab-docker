@@ -9,7 +9,7 @@ RUN apt-get update --yes && \
 	apt-get install --yes --no-install-recommends \
 	autoconf \
 	autoconf-archive \
-    	automake \
+    automake \
 	checkinstall \
 	cmake \
 	curl \
@@ -28,7 +28,8 @@ RUN apt-get update --yes && \
 	pkg-config \
 	xzgv \
 	zlib1g-dev \
-    	software-properties-common && \
+	# to make apt add repository available
+    software-properties-common && \
 	apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository ppa:alex-p/tesseract-ocr5
@@ -52,6 +53,15 @@ RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 
 USER ${NB_UID}
 
+# Install the Dask dashboard
+RUN pip install --quiet --no-cache-dir dask-labextension && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
+# Dask Scheduler & Bokeh ports
+EXPOSE 8787
+EXPOSE 8786
+
 RUN mamba install --quiet --yes \
     'xlsxwriter' && \
     mamba clean --all -f -y && \
@@ -64,13 +74,16 @@ ARG conda_env2=ocr
 ARG py_ver=3.9
 
 # you can add additional libraries you want mamba to install by listing them below the first line and ending with "&& \"
-RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env1}" python=${py_ver} 'ipython' 'ipykernel' && \
-    'jupyter' 'beautifulsoup4' 'requests' 'selenium' 'schedule' 'tqdm' && \
+RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env1}" python=${py_ver} ipython ipykernel \
+    jupyter beautifulsoup4 requests selenium schedule tqdm && \
     mamba clean --all -f -y
 
-RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env2}" python=${py_ver} 'ipython' 'ipykernel' && \
-    'jupyter' 'pdfminer.six' 'pdfplumber' 'pytesseract' && \
+RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env2}" python=${py_ver} ipython ipykernel \
+    jupyter pdfminer.six pdfplumber pytesseract && \
     mamba clean --all -f -y
+
+# any additional pip installs can be added by uncommenting the following line
+RUN "${CONDA_DIR}/envs/${conda_env2}/bin/pip" install --quiet --no-cache-dir opencv-contrib-python-headless
 
 # create Python kernel and link it to jupyter
 RUN "${CONDA_DIR}/envs/${conda_env1}/bin/python" -m ipykernel install --user --name="${conda_env1}" && \
@@ -80,15 +93,6 @@ RUN "${CONDA_DIR}/envs/${conda_env1}/bin/python" -m ipykernel install --user --n
 RUN "${CONDA_DIR}/envs/${conda_env2}/bin/python" -m ipykernel install --user --name="${conda_env2}" && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
-
-# Install the Dask dashboard
-RUN "${CONDA_DIR}/envs/${conda_env}/bin/pip" install --quiet --no-cache-dir dask-labextension && \
-    fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
-
-# Dask Scheduler & Bokeh ports
-EXPOSE 8787
-EXPOSE 8786
 
 # Switch back to jovyan to avoid accidental container runs as root
 USER ${NB_UID}
