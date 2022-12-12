@@ -71,7 +71,7 @@ RUN mamba install --quiet --yes \
 # name your environment and choose the python version
 ARG conda_env1=scrapper
 ARG conda_env2=ocr
-ARG py_ver=3.9
+ARG py_ver=3.10
 
 # you can add additional libraries you want mamba to install by listing them below the first line and ending with "&& \"
 RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env1}" python=${py_ver} ipython ipykernel \
