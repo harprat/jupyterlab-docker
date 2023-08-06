@@ -64,7 +64,7 @@ RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env1}" python=${py_
     mamba clean --all -f -y
 
 RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env2}" python=${py_ver} ipython ipykernel \
-    jupyter pdfminer.six pdfplumber pytesseract && \
+    jupyter pdfminer.six pdfplumber pytesseract imutils && \
     mamba clean --all -f -y
 
 #RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env3}" python=${py_ver} dask && \
