@@ -1,5 +1,8 @@
 # Choose your desired base image
-FROM jupyter/scipy-notebook:latest
+ARG REGISTRY=quay.io
+ARG OWNER=jupyter
+ARG BASE_CONTAINER=$REGISTRY/$OWNER/scipy-notebook
+FROM $BASE_CONTAINER
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -57,12 +60,13 @@ RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 ARG conda_env1=scrapper
 ARG conda_env2=ocr
 #ARG conda_env3=multi_process
-ARG py_ver=3.10
+ARG py_ver=3.11
 
 # you can add additional libraries you want mamba to install by listing them below the first line and ending with "&& \"
 # Install in default env
 RUN mamba install --yes \
-    'polars' && \
+    'polars' \
+    'mdutils' && \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
