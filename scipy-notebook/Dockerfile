@@ -59,11 +59,21 @@ RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 # name your environment and choose the python version
 ARG conda_env1=scrapper
 ARG conda_env2=ocr
-#ARG conda_env3=multi_process
+ARG conda_env3=data_eng
+#ARG conda_env4=multi_process
 ARG py_ver=3.11
 
 # you can add additional libraries you want mamba to install by listing them below the first line and ending with "&& \"
 # Install in default env
+  # Install PyTorch with pip (https://pytorch.org/get-started/locally/)
+  # hadolint ignore=DL3013
+RUN pip install --no-cache-dir --index-url 'https://download.pytorch.org/whl/cpu' \
+    'torch' \
+    'torchvision' \
+    'torchaudio'  && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
 RUN mamba install --yes \
     'polars' \
     'mdutils' && \
@@ -82,7 +92,12 @@ RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env2}" python=${py_
     mamba clean --all -f -y
 
 # env_3
-#RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env3}" python=${py_ver} dask && \
+RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env3}" python=${py_ver} ipython ipykernel \
+    jupyter pandas beautifulsoup4 requests luigi psycopg2 SQLAlchemy tqdm polars && \
+    mamba clean --all -f -y
+
+# env_4
+#RUN mamba create --quiet --yes -p "${CONDA_DIR}/envs/${conda_env4}" python=${py_ver} dask && \
 #    mamba clean --all -f -y
 
 # any additional pip installs can be added by uncommenting the following line
@@ -100,7 +115,12 @@ RUN "${CONDA_DIR}/envs/${conda_env2}/bin/python" -m ipykernel install --user --n
     fix-permissions "/home/${NB_USER}"
 
 # env_3
-#RUN "${CONDA_DIR}/envs/${conda_env3}/bin/python" -m ipykernel install --user --name="${conda_env3}" && \
+RUN "${CONDA_DIR}/envs/${conda_env2}/bin/python" -m ipykernel install --user --name="${conda_env3}" && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
+# env_4
+#RUN "${CONDA_DIR}/envs/${conda_env3}/bin/python" -m ipykernel install --user --name="${conda_env4}" && \
 #    fix-permissions "${CONDA_DIR}" && \
 #    fix-permissions "/home/${NB_USER}"
 
