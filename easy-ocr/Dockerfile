@@ -30,6 +30,7 @@ RUN apt-get update --yes && \
 	libtiff-dev \
 	libtool \
 	pkg-config \
+	swig3.0 \
 	xzgv \
 	zlib1g-dev \
 	# to make apt add repository available
@@ -37,15 +38,13 @@ RUN apt-get update --yes && \
 	apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository ppa:alex-p/tesseract-ocr5
+RUN ln -s /usr/bin/swig3.0 /usr/bin/swig
 
 # Install tesseract
 RUN apt install -y tesseract-ocr
 
 # To prevent apt-key output warning 
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-
-# name your environment and choose the python version
-ARG py_ver=3.11
 
 # you can add additional libraries you want mamba to install by listing them below the first line and ending with "&& \"
 # Install in default env
@@ -70,6 +69,7 @@ RUN mamba install --yes \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
+
 
 # any additional pip installs can be added by uncommenting the following line
 RUN pip install --quiet --no-cache-dir opencv-contrib-python-headless
